@@ -57,9 +57,13 @@ pip install sqllite
 
 ### Required File Paths
 SOURCE_PATH = r"D:\Dedupe_Project\Source"
+
 TARGET_DATA_PATH = r"D:\Dedupe_Project\Library"
+
 TARGET_METADATA_PATH = r"D:\Dedupe_Project\BackupSets"
+
 HASH_DB_PATH = r"D:\Dedupe_Project\DDB\hash_keys.db"
+
 RESTORE_PATH = r"D:\Dedupe_Project\Restore"
 
 ### Folder Structure
