@@ -68,10 +68,15 @@ RESTORE_PATH = r"D:\Dedupe_Project\Restore"
 
 ### Folder Structure
 ├── app.py # Flask application with RESTful APIs
+
 ├── Py_Dedupe1.py # Deduplication logic
+
 ├── Py_restore1.py # Restoration logic
+
 ├── templates/
+
 │ └── index.html # Web interface HTML file
+
 └── DDB/ # SQLite database for hash keys (auto-created)
 
 ## How to Run
