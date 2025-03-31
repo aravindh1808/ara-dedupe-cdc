@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variable Block Length Deduplication</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #4CAF50;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+
+        /* Button Styles */
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Input Styles */
+        input[type="text"] {
+            width: calc(100% - 30px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>Variable Block Length Deduplication</h1>
+
+    <div class="container">
+        
+        <!-- Backup Section -->
+        <div class="section">
+            <h2>Backup Operations</h2>
+            
+            <label for="sourcePath">Source Path:</label>
+            <input type="text" id="sourcePath" name="sourcePath" placeholder="Enter source path">
+            
+            <button onclick="startBackup()">Start Backup</button>
+
+            <!-- Deduplication Summary -->
+            <div id="dedupeSummary" style="display:none; margin-top:15px;">
+                <h3>Deduplication Summary</h3>
+                <p>Total Files Backed Up: <span id="totalFiles"></span></p>
+                <p>Total Data Size: <span id="totalDataSize"></span> bytes</p>
+                <p>New Data Blocks Written: <span id="newChunks"></span></p>
+                <p>Total Chunks Processed: <span id="totalChunks"></span></p>
+                <p>Deduplication Ratio: <span id="dedupRatio"></span></p>
+             </div>
+
+         </div>
+
+         <!-- Database Table Section -->
+         <div class="section">
+             <h2>Database Table Contents</h2>
+             <button onclick="fetchDbTable()">Load Table</button>
+             <table id="dbTable" style="display:none;">
+                 <thead>
+                     <tr>
+                         <th>Hash</th>
+                         <th>Chunk Path</th>
+                     </tr>
+                 </thead>
+                 <tbody></tbody>
+             </table>
+         </div>
+
+         <!-- Restore Section -->
+         <div class="section">
+             <h2>Restore Operations</h2>
+
+             <label for="metadataPath">Metadata Path:</label>
+             <input type="text" id="metadataPath" name="metadataPath" placeholder="Enter metadata path">
+
+             <button onclick="startRestore()">Start Restore</button>
+
+             <!-- Restore Status -->
+             <div id="restoreStatus" style="display:none; margin-top:15px;">
+                 <h3>Restore Status</h3>
+                 <p id="restoreMessage"></p>
+             </div>
+         </div>
+
+     </div>
+
+     <!-- JavaScript -->
+     <script>
+         async function startBackup() {
+             const sourcePath = document.getElementById('sourcePath').value;
+
+             const response = await fetch('/backup', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ sourcePath })
+             });
+
+             const result = await response.json();
+
+             if (result.status === 'success') {
+                 const summary = result.deduplicationSummary;
+
+                 document.getElementById('dedupeSummary').style.display = 'block';
+                 document.getElementById('totalFiles').textContent = summary.total_files || 'N/A';
+                 document.getElementById('totalDataSize').textContent = summary.total_data_size || 'N/A';
+                 document.getElementById('newChunks').textContent = summary.new_chunks || 'N/A';
+                 document.getElementById('totalChunks').textContent = summary.total_chunks || 'N/A';
+                 document.getElementById('dedupRatio').textContent =
+                     summary.dedup_ratio_percentage !== null ? `${summary.dedup_ratio_percentage.toFixed(2)}%` : 'N/A';
+             } else {
+                 alert(`Backup Error: ${result.message}`);
+             }
+         }
+
+         async function fetchDbTable() {
+             const response = await fetch('/db_table');
+             const result = await response.json();
+
+             if (result.status === 'success') {
+                 const table = document.getElementById('dbTable');
+                 const tbody = table.querySelector('tbody');
+                 tbody.innerHTML = ''; // Clear previous data
+
+                 result.data.forEach(row => {
+                     const tr = document.createElement('tr');
+                     tr.innerHTML = `<td>${row.hash}</td><td>${row.chunk_path}</td>`;
+                     tbody.appendChild(tr);
+                 });
+
+                 table.style.display = 'table'; // Show the table
+             } else {
+                 alert(`Error loading table contents.`);
+             }
+         }
+
+         async function startRestore() {
+             const metadataPath = document.getElementById('metadataPath').value;
+
+             const response = await fetch('/restore', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ metadataPath })
+             });
+
+             const result = await response.json();
+             
+             const statusDiv = document.getElementById('restoreStatus');
+             const messageEl = document.getElementById('restoreMessage');
+
+             statusDiv.style.display = 'block';
+             
+             if (result.status === 'success') {
+                 messageEl.textContent = result.message || "Restore completed successfully!";
+                 messageEl.style.color = '#4CAF50';
+             } else {
+                 messageEl.textContent = `Restore Error! ${result.message}`;
+                 messageEl.style.color = 'red';
+             }
+         }
+     </script>
+
+</body>
+</html>
